@@ -37,11 +37,14 @@ Item {
   // Panels that let items be reordered set this, and Ctrl+Up/Down (or
   // Ctrl+k/j) then asks to move the current item instead of the cursor.
   property bool reorderable: false
+  property bool searchable: false
 
+  signal handleCustomKeys(KeyEvent event)
   signal moveRequested(int dx, int dy)
   signal reorderRequested(int dy)
   signal activateRequested()
-  signal returnRequested()
+  signal returnRequested(KeyEvent event)
+  signal goBack(KeyEvent event)
   signal closeRequested()
   signal deleteRequested()
   signal tabRequested(int direction)
@@ -52,6 +55,11 @@ Item {
   Keys.priority: Keys.BeforeItem
   Keys.onPressed: function(event) {
     if (blocked) return
+
+    handleCustomKeys(event)
+    if (event.accepted) {
+      return
+    }
 
     if (event.key === Qt.Key_Escape) {
       closeRequested(); event.accepted = true; return
@@ -68,30 +76,43 @@ Item {
         reorderRequested(down ? 1 : -1); event.accepted = true; return
       }
     }
-    if (event.key === Qt.Key_Down || event.text === "j") {
+    if (event.key === Qt.Key_PageUp) {
+      moveRequested(0, -6); event.accepted = true; return
+    }
+    if (event.key === Qt.Key_PageDown) {
+      moveRequested(0, 6); event.accepted = true; return
+    }
+    if (event.key === Qt.Key_Down || isVimMotion(event, Qt.Key_J)) {
       moveRequested(0, 1); event.accepted = true; return
     }
-    if (event.key === Qt.Key_Up || event.text === "k") {
+    if (event.key === Qt.Key_Up || isVimMotion(event, Qt.Key_K)) {
       moveRequested(0, -1); event.accepted = true; return
     }
-    if (event.key === Qt.Key_Right || event.text === "l") {
+    if (event.key === Qt.Key_Right || isVimMotion(event, Qt.Key_L)) {
       moveRequested(1, 0); event.accepted = true; return
     }
-    if (event.key === Qt.Key_Left || event.text === "h") {
+    if (event.key === Qt.Key_Left || isVimMotion(event, Qt.Key_H)) {
       moveRequested(-1, 0); event.accepted = true; return
     }
+    if (event.key === Qt.Key_Backspace) {
+      goBack(event); event.accepted = true; return
+    }
     if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
-      returnRequested()
+      returnRequested(event)
       activateRequested(); event.accepted = true; return
     }
-    if (event.key === Qt.Key_Space) {
+    if (!searchable && event.key === Qt.Key_Space) {
       activateRequested(); event.accepted = true; return
     }
-    if (event.key === Qt.Key_Delete || event.text === "x" || event.text === "X") {
+    if (event.key === Qt.Key_Delete || event.text === Qt.Key_X) {
       deleteRequested(); event.accepted = true; return
     }
-    if (event.text && event.text.length === 1) {
+    if (event.text && event.text.length === 1 && event.text.charCodeAt(0) >= 32 && event.text.charCodeAt(0) !== 127 && (event.modifiers === Qt.NoModifier || event.modifiers === Qt.ShiftModifier)) {
       textKey(event.text, event.modifiers)
     }
+  }
+
+  function isVimMotion(event, key) {
+    return ((!searchable || event.modifiers === Qt.CTRL) && event.key === key)
   }
 }

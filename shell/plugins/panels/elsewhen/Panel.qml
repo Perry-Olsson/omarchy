@@ -734,6 +734,17 @@ Panel {
       id: keyCatcher
       anchors.fill: parent
       blocked: root.adding
+      onHandleCustomKeys: function(event) {
+        if (event.key === Qt.Key_T) {
+          if (event.modifiers & Qt.AltModifier) {
+            root.toggleUnits()
+            event.accepted = true
+          } else {
+            root.toggleHour24()
+            event.accepted = true
+          }
+        }
+      }
       // Escape unwinds one layer: search (its own field), a shifted time, globe, then panel.
       onCloseRequested: {
         if (root.scrubMinutes !== 0) { scrubHold.stop(); root.scrubMinutes = 0 }
