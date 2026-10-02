@@ -36,9 +36,15 @@ Item {
       compare(root.lastModifiers & Qt.AltModifier, 0)
     }
 
-    function test_altLetterCarriesAlt() {
+    function test_altWithTextKeyDoesNotFire() {
       keyClick(Qt.Key_T, Qt.AltModifier)
-      compare(root.lastText.toLowerCase(), "t")
+      compare(root.lastText.toLowerCase(), "")
+      verify(root.lastModifiers & Qt.AltModifier)
+    }
+
+    function test_shiftWithTextKeyDoesFire() {
+      keyClick(Qt.Key_T, Qt.AltModifier)
+      compare(root.lastText.toLowerCase(), "T")
       verify(root.lastModifiers & Qt.AltModifier)
     }
   }
